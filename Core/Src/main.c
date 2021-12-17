@@ -96,18 +96,18 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){ //https://os.mbed.com/p
 		HAL_UART_Receive_IT(huart, Rx2_data, 1);
 	}
 	else if(huart==&huart3){ //Virtual PLoad
-		/*HAL_UART_Transmit(huart,"DT",2,HAL_MAX_DELAY);
-		//HAL_UART_Transmit(huart,"T",1,HAL_MAX_DELAY);*/
-		//HAL_UART_Transmit(&huart2,"OK",2,HAL_MAX_DELAY);
-		HAL_UART_Transmit(&huart2,"CU a transmis D\n",16,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart2,"CU a recu ",10,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart2,Rx3_data,1,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart2,"\n",1,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart2,"CU transmet D\n",14,HAL_MAX_DELAY);
 		HAL_UART_Transmit(huart,"D",1,HAL_MAX_DELAY);
-		/*if(Rx3_data=="A"){
-			HAL_UART_Transmit(huart,"D",1,HAL_MAX_DELAY);
-		}*/
 		HAL_UART_Receive_IT(huart, Rx3_data, 1);
 	}
 	else if(huart==&huart1){
+		HAL_UART_Transmit(&huart2,"OBC a recu ",11,HAL_MAX_DELAY);
 		HAL_UART_Transmit(&huart2,Rx1_data,1,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart2,"\n",1,HAL_MAX_DELAY);
+		//HAL_UART_Transmit(&huart2,Rx1_data,1,HAL_MAX_DELAY);
 		HAL_UART_Receive_IT(huart, Rx1_data,1);
 	}
 	else{
@@ -437,8 +437,8 @@ void StartTransm2(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	HAL_UART_Transmit(&huart2,"\nOBC demande A\n",15,HAL_MAX_DELAY);
 	HAL_UART_Transmit(&huart1,"A",1,HAL_MAX_DELAY);
-	HAL_UART_Transmit(&huart2,"\nValeur de CU ?\n",16,HAL_MAX_DELAY);
     osDelay(1000);
   }
   /* USER CODE END StartTransm2 */
@@ -457,7 +457,8 @@ void StartPLoad(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	//HAL_UART_Transmit(&huart3,"S",1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart2,"CU envoie S\n",12,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart3,"S",1,HAL_MAX_DELAY);
     osDelay(3000);
   }
   /* USER CODE END StartPLoad */
