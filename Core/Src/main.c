@@ -66,6 +66,20 @@ const osThreadAttr_t PLoadStatus_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for OBCAskU */
+osThreadId_t OBCAskUHandle;
+const osThreadAttr_t OBCAskU_attributes = {
+  .name = "OBCAskU",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for OBCAskV */
+osThreadId_t OBCAskVHandle;
+const osThreadAttr_t OBCAskV_attributes = {
+  .name = "OBCAskV",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -78,7 +92,9 @@ static void MX_USART1_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 void StartBlink_led(void *argument);
 void StartTransm2(void *argument);
-void StartPLoad(void *argument);
+void PLStatus(void *argument);
+void StartOBCAsku(void *argument);
+void StartOBCAskV(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -89,9 +105,12 @@ void StartPLoad(void *argument);
 char Rx1_data[10];
 char Rx2_data[10];
 char Rx3_data[10];
-//uint8_t Transmit=1;
+//http://www.pomad.fr/node/19
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){ //https://os.mbed.com/platforms/ST-Nucleo-L476RG/
 	if(huart==&huart2){
+		if(Rx2_data=='1'){
+			HAL_UART_Transmit(huart,"OK\n",3,HAL_MAX_DELAY);
+		}
 		HAL_UART_Transmit(huart,Rx2_data,1,HAL_MAX_DELAY);
 		HAL_UART_Receive_IT(huart, Rx2_data, 1);
 	}
@@ -99,7 +118,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){ //https://os.mbed.com/p
 		HAL_UART_Transmit(&huart2,"CU a recu ",10,HAL_MAX_DELAY);
 		HAL_UART_Transmit(&huart2,Rx3_data,1,HAL_MAX_DELAY);
 		HAL_UART_Transmit(&huart2,"\n",1,HAL_MAX_DELAY);
-		HAL_UART_Transmit(&huart2,"CU transmet D\n",14,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart2,"[PLD->OBC]CU transmet D\n",24,HAL_MAX_DELAY);
 		HAL_UART_Transmit(huart,"D",1,HAL_MAX_DELAY);
 		HAL_UART_Receive_IT(huart, Rx3_data, 1);
 	}
@@ -184,7 +203,13 @@ int main(void)
   Transmission2Handle = osThreadNew(StartTransm2, NULL, &Transmission2_attributes);
 
   /* creation of PLoadStatus */
-  PLoadStatusHandle = osThreadNew(StartPLoad, NULL, &PLoadStatus_attributes);
+  PLoadStatusHandle = osThreadNew(PLStatus, NULL, &PLoadStatus_attributes);
+
+  /* creation of OBCAskU */
+  OBCAskUHandle = osThreadNew(StartOBCAsku, NULL, &OBCAskU_attributes);
+
+  /* creation of OBCAskV */
+  OBCAskVHandle = osThreadNew(StartOBCAskV, NULL, &OBCAskV_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -412,13 +437,8 @@ void StartBlink_led(void *argument)
   for(;;)
   {
 	HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5);
-	//HAL_UART_Transmit(&huart2,"LED",3,HAL_MAX_DELAY);
-	//HAL_UART_Transmit(&huart2,Rx_data,1,HAL_MAX_DELAY);
-	//HAL_UART_Transmit(&huart2,"\n",1,HAL_MAX_DELAY);
-	/*for(int i;i<sizeof(Rx_data);i++){
-		Rx_data[i]=0;
-	}*/
-    osDelay(1000); //Every 500 ms
+
+    osDelay(1000); //Every 1000 ms
   }
   osThreadTerminate(NULL);
   /* USER CODE END 5 */
@@ -437,31 +457,82 @@ void StartTransm2(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	HAL_UART_Transmit(&huart2,"\nOBC demande A\n",15,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart2,"\n[OBC->PLD]OBC demande A\n",25,HAL_MAX_DELAY);
 	HAL_UART_Transmit(&huart1,"A",1,HAL_MAX_DELAY);
     osDelay(1000);
   }
   /* USER CODE END StartTransm2 */
 }
 
-/* USER CODE BEGIN Header_StartPLoad */
+/* USER CODE BEGIN Header_PLStatus */
 /**
 * @brief Function implementing the PLoadStatus thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartPLoad */
-void StartPLoad(void *argument)
+/* USER CODE END Header_PLStatus */
+void PLStatus(void *argument)
 {
   /* USER CODE BEGIN StartPLoad */
+	int StatusCount=0;
   /* Infinite loop */
   for(;;)
   {
-	HAL_UART_Transmit(&huart2,"CU envoie S\n",12,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart2,"[PLD->OBC]CU envoie Status\n",27,HAL_MAX_DELAY);
 	HAL_UART_Transmit(&huart3,"S",1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart3,StatusCount+'0',1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart3,"\n",1,HAL_MAX_DELAY);
+	StatusCount= StatusCount<9? StatusCount+1 : 0;
     osDelay(3000);
   }
   /* USER CODE END StartPLoad */
+}
+/* USER CODE BEGIN Header_StartOBCAsku */
+/**
+* @brief Function implementing the OBCAskU thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartOBCAsku */
+void StartOBCAsku(void *argument)
+{
+  /* USER CODE BEGIN StartOBCAsku */
+  int StatusCount=0;
+  /* Infinite loop */
+  for(;;)
+  {
+	HAL_UART_Transmit(&huart2,"[OBC->PLD]OBC envoie U\n",22,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1,"U",1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1,StatusCount+'0',1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1,"\n",1,HAL_MAX_DELAY);
+	StatusCount= StatusCount<9? StatusCount+1 : 0;
+    osDelay(2000);
+  }
+  /* USER CODE END StartOBCAsku */
+}
+
+/* USER CODE BEGIN Header_StartOBCAskV */
+/**
+* @brief Function implementing the OBCAskV thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartOBCAskV */
+void StartOBCAskV(void *argument)
+{
+  /* USER CODE BEGIN StartOBCAskV */
+	  int StatusCount=0;
+	  /* Infinite loop */
+	  for(;;)
+	  {
+		HAL_UART_Transmit(&huart2,"[OBC->PLD]OBC envoie V\n",22,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart1,"V",1,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart1,StatusCount+'0',1,HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart1,"\n",1,HAL_MAX_DELAY);
+		StatusCount= StatusCount<9? StatusCount+1 : 0;
+	    osDelay(2500);
+	  }
+  /* USER CODE END StartOBCAskV */
 }
 
 /**

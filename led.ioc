@@ -1,7 +1,7 @@
 #MicroXplorer Configuration settings - do not modify
-FREERTOS.FootprintOK=true
+FREERTOS.FootprintOK=false
 FREERTOS.IPParameters=Tasks01,FootprintOK
-FREERTOS.Tasks01=blink_led,24,128,StartBlink_led,Default,NULL,Dynamic,NULL,NULL;Transmission2,25,128,StartTransm2,Default,NULL,Dynamic,NULL,NULL;PLoadStatus,8,128,StartPLoad,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.Tasks01=blink_led,24,128,StartBlink_led,Default,NULL,Dynamic,NULL,NULL;Transmission2,25,128,StartTransm2,Default,NULL,Dynamic,NULL,NULL;PLoadStatus,8,128,PLStatus,Default,NULL,Dynamic,NULL,NULL;OBCAskU,8,128,StartOBCAsku,Default,NULL,Dynamic,NULL,NULL;OBCAskV,8,128,StartOBCAskV,Default,NULL,Dynamic,NULL,NULL
 File.Version=6
 KeepUserPlacement=true
 Mcu.Family=STM32L4
@@ -219,3 +219,4 @@ VP_SYS_VS_tim6.Mode=TIM6
 VP_SYS_VS_tim6.Signal=SYS_VS_tim6
 board=NUCLEO-L476RG
 boardIOC=true
+isbadioc=false
